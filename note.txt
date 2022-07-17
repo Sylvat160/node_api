@@ -1,0 +1,113 @@
+nodemon permet le redemarrage l'api rest afin de prendre  en compte les modification
+
+ "express": "npm install express --save",
+    "nodemon": "npm install nodemon --save-dev",
+    "bodyparser": "npm install body-parser --save",
+    "morgan":"npm install morgan --save-dev",
+    "sequelize":"npm install sequelize --save",
+    "mysql":"npm install bcrypt --save",
+    "bcrypt":"npm install bcrypt --save"
+
+helper => une methode qui permet un meilleur formatage de la reponse json. 
+Un middleware => des fonctions js capables d'agir avec les requetes entrentes et sortantes de votre api (Applique un traitement aux donnees)
+5 types de middleware 
+
+Sequelize => un ORM de javascript destine aux utilisateurs de nodeJS qui est entierement base sur les promesses de js 
+Il permet de gerer le traitement asynchrone des donnees.
+
+La methode create() de sequelize permet d'ajouter de nouveaux elements a la base de donnees.
+
+point de terminaison de debut 
+
+app.get('/', (req,res)=>res.send('Hello Smart Sylva. You must more than that. Remenber why you start') )
+app.get('/api/pokemons/:id', (req,res) => {
+    const id = parseInt(req.params.id)
+    const pokemon = pokemons.find(pokemon => pokemon.id === id)
+    // res.send(`Vous avez demande le pokemon ${pokemon.name} `)
+    const message = 'Un pokemon a bien ete trouve !'
+    // res.json(helper.success(message,pokemon))
+    res.json( success(message,pokemon))
+})
+app.get('/api/pokemons' , (req, res) => {
+    // const pokemonList = pokemons.length
+    // res.send(`Il y a ${pokemonList} pokemons dans la pokedex`)
+    const pokemonsList = pokemons
+    const message = 'La liste des pokemons a bien ete recuperee !'
+    res.json(success(message,pokemonsList))
+})
+app.post('/api/pokemons', (req,res) => {
+    const id=getUniqueId(pokemons)
+    const pokemonCreated = { ...req.body, ...{id:id, created:new Date()}}
+    pokemons.push(pokemonCreated)
+    const message = `Le pokemon ${pokemonCreated.name} a bien ete cree !`
+    res.json(success(message,pokemonCreated))
+} )
+
+app.put('/api/pokemons/:id', (req,res) => {
+    const id = parseInt(req.params.id)
+    const pokemonUpdated = { ...req.body, id:id}
+    pokemons = pokemons.map(pokemon => {
+        return pokemon.id ===id ? pokemonUpdated : pokemon
+    })
+    const message  = `Le pokemon ${pokemonUpdated.name} a bien ete modifie`
+    res.json(success(message,pokemonUpdated))
+})
+
+app.delete('/api/pokemons/:id', (req,res) => {
+    const id = parseInt(req.params.id)
+    const pokemonDeleted = pokemons.find(pokemon => pokemon.id === id)
+    pokemons.filter(pokemon => pokemon.id !== 1)
+    const message = `Le pokemon ${pokemonDeleted.name} a bien ete supprime`
+    res.json(success(message,pokemonDeleted))
+})
+
+
+utilisation de sequelize
+
+const sequelize = new Sequelize(
+    'new_pokedex',
+    'root',
+    '',
+    {
+        host:'localhost',
+        dialect:'mysql', //driver
+        dialectOptions:{
+            timezone:'Etc/GMT-0'
+        },
+        logging:false
+    }
+)
+sequelize.authenticate()
+    .then(_ => console.log('La connexion a la base de donnees a bien ete etablie'))
+    .catch(error => console.log(`Impossible de se connecter a la base de donnees ${error}`))
+
+const Pokemon = PokemonModel(sequelize,DataTypes)
+sequelize.sync({force:true})
+    .then(_ => {
+        console.log('La base de donnes Pokedex a bien ete synchronisee')
+        
+            // Pokemon.create({
+            //     name: 'Bulbizarre',
+            //     hp: '25',
+            //     cp:'5',
+            //     picture:"http://assets.pokemons.com/assets/cms2/img/pokedx/detail/001.png",
+            //     types:['Plantes','Poison'].join()
+            // })
+            // .then(bulbizarre => console.log(bulbizarre.toJSON()))
+            pokemons.map(pokemon => {
+                Pokemon.create({
+                    name: pokemon.name,
+                    hp: pokemon.hp,
+                    cp: pokemon.cp,
+                    picture: pokemon.picture,
+                    types: pokemon.types.join()
+                })
+                .then(bulbizarre => console.log(bulbizarre.toJSON()))
+            })
+        
+        })
+
+
+Les validateurs => charger de la validation d un modele au nveau du code js pure. Il en existe plusieurs mais on peut tout de meme en creer (Isint , Isemail  isUrl ...)
+ et les contraintes => ce sont les regles definit directement dans la base de donnees => requete a la base de donnees
+  les erreur metiers(4h58)
